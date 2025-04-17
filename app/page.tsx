@@ -4,6 +4,11 @@ import type React from "react"
 
 import Head from "next/head"
 import { Wheel } from "react-custom-roulette"
+import dynamic from "next/dynamic";
+
+const SpinWheelClient = dynamic(() => import("./components/SpinWheelClient"), {
+  ssr: false,
+});
 
 interface Recipe {
   name: string
@@ -677,26 +682,19 @@ export default function Home() {
                 {wheelEnabled ? (
                   <div style={styles.wheelSection}>
                     <div style={styles.wheelContainer}>
-                      <Wheel
-                        mustStartSpinning={mustSpin}
-                        prizeNumber={prizeIndex}
-                        data={data}
-                        backgroundColors={["#1e3a8a", "#2563eb"]}
-                        textColors={["#ffffff"]}
-                        outerBorderColor="#1e3a8a"
-                        outerBorderWidth={5}
-                        radiusLineColor="#d1d5db"
-                        radiusLineWidth={1}
-                        fontSize={14}
-                        onStopSpinning={() => {
-                          setMustSpin(false)
-                          setSelectedRecipe(filteredRecipes[prizeIndex])
-                        }}
-                      />
+                    <SpinWheelClient
+                      data={data}
+                      prizeIndex={prizeIndex}
+                      mustSpin={mustSpin}
+                      onSpinStart={handleSpin}
+                      onSpinEnd={(selectedName) => {
+                        setMustSpin(false)
+                        const selected = filteredRecipes.find(r => r.name === selectedName)
+                        if (selected) setSelectedRecipe(selected)
+                      }}
+                    />
+
                     </div>
-                    <button onClick={handleSpin} style={styles.button}>
-                      Spin
-                    </button>
 
                     {selectedRecipe && (
                       <div style={styles.selectedRecipePreview} onClick={() => setIsModalOpen(true)}>
