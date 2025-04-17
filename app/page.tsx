@@ -3,12 +3,11 @@ import { useState } from "react"
 import type React from "react"
 
 import Head from "next/head"
-import { Wheel } from "react-custom-roulette"
-import dynamic from "next/dynamic";
+import dynamic from "next/dynamic"
 
 const SpinWheelClient = dynamic(() => import("./components/SpinWheelClient"), {
   ssr: false,
-});
+})
 
 interface Recipe {
   name: string
@@ -419,6 +418,117 @@ export default function Home() {
     }
   }
 
+  const openRecipeModal = (recipe: Recipe) => {
+    setSelectedRecipe(recipe)
+    setIsModalOpen(true)
+  }
+
+  const RecipeModal = ({ recipe, onClose }: { recipe: Recipe; onClose: () => void }) => {
+    const isFavorite = favorites.some((fav) => fav.name === recipe.name)
+
+    return (
+      <div style={styles.modalOverlay}>
+        <div style={styles.recipeModalContent}>
+          <div style={styles.recipeModalHeader}>
+            <h2 style={styles.recipeModalTitle}>{recipe.name}</h2>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                toggleFavorite(recipe)
+              }}
+              style={styles.favoriteIconLarge}
+              title={isFavorite ? "Remove from favorites" : "Add to favorites"}
+            >
+              {isFavorite ? "❤️" : "🤍"}
+            </button>
+          </div>
+
+          <p style={styles.recipeDescription}>{recipe.description}</p>
+
+          <div style={styles.recipeBasicInfo}>
+            <span style={styles.recipeInfoItem}>⏱️ {recipe.prepTime} mins</span>
+            <span style={styles.recipeInfoItem}>🔥 {recipe.calories} cal</span>
+          </div>
+
+          <div style={styles.recipeDietaryTags}>
+            {getDietaryTags(recipe).map((tag, index) => (
+              <span key={index} style={styles.recipeDietaryTag}>
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          <div style={styles.recipeDivider}></div>
+
+          <div style={styles.recipeSection}>
+            <h3 style={styles.recipeSectionTitle}>Macros:</h3>
+            <p>{recipe.macros}</p>
+          </div>
+
+          <div style={styles.recipeSection}>
+            <h3 style={styles.recipeSectionTitle}>Contains:</h3>
+            <div style={styles.recipeAllergenList}>
+              {recipe.allergens.map((allergen, index) => (
+                <span key={index} style={styles.recipeAllergenBadge}>
+                  {allergen}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div style={styles.recipeSection}>
+            <h3 style={styles.recipeSectionTitle}>Ingredients:</h3>
+            <ul style={styles.recipeList}>
+              {recipe.ingredients.map((ingredient, index) => (
+                <li key={index} style={styles.recipeListItem}>
+                  {ingredient}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div style={styles.recipeSection}>
+            <h3 style={styles.recipeSectionTitle}>Instructions:</h3>
+            <ol style={styles.recipeList}>
+              {recipe.instructions.map((instruction, index) => (
+                <li key={index} style={styles.recipeListItem}>
+                  {instruction}
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <div style={styles.recipeFiltersSection}>
+            <h3 style={styles.recipeSectionTitle}>Current Filters:</h3>
+            <div style={styles.recipeFilters}>
+              <p>
+                <strong>Max Prep Time:</strong> {filters.maxPrepTime} mins
+              </p>
+              <p>
+                <strong>Max Calories:</strong> {filters.maxCalories}
+              </p>
+              {allergyList.length > 0 && (
+                <p>
+                  <strong>Allergies:</strong> {allergyList.join(", ")}
+                </p>
+              )}
+              {filters.dietaryPreferences.length > 0 && (
+                <p>
+                  <strong>Dietary Preferences:</strong>{" "}
+                  {filters.dietaryPreferences.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <button onClick={onClose} style={styles.closeRecipeButton}>
+            Close Recipe
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const RecipeCard = ({
     recipe,
     expanded = false,
@@ -525,7 +635,7 @@ export default function Home() {
           </div>
         )}
         {!expanded && (
-          <button onClick={() => setExpandedRecipe(recipe)} style={styles.recipeButton}>
+          <button onClick={() => openRecipeModal(recipe)} style={styles.recipeButton}>
             See Recipe
           </button>
         )}
@@ -548,7 +658,7 @@ export default function Home() {
         <title>Recipe Spin Wheel</title>
       </Head>
       <main style={styles.container}>
-        <div style={styles.sidebarLayout}>
+        <div style={styles.appLayout}>
           <div style={styles.sidebar}>
             <h2 style={styles.sidebarTitle}>Favorite Recipes</h2>
             {favorites.length === 0 ? (
@@ -556,7 +666,7 @@ export default function Home() {
             ) : (
               <div style={styles.favoritesList}>
                 {favorites.map((recipe, index) => (
-                  <div key={index} style={styles.favoriteItem} onClick={() => setExpandedRecipe(recipe)}>
+                  <div key={index} style={styles.favoriteItem} onClick={() => openRecipeModal(recipe)}>
                     <span>{recipe.name}</span>
                     <button
                       onClick={(e) => {
@@ -682,22 +792,21 @@ export default function Home() {
                 {wheelEnabled ? (
                   <div style={styles.wheelSection}>
                     <div style={styles.wheelContainer}>
-                    <SpinWheelClient
-                      data={data}
-                      prizeIndex={prizeIndex}
-                      mustSpin={mustSpin}
-                      onSpinStart={handleSpin}
-                      onSpinEnd={(selectedName) => {
-                        setMustSpin(false)
-                        const selected = filteredRecipes.find(r => r.name === selectedName)
-                        if (selected) setSelectedRecipe(selected)
-                      }}
-                    />
-
+                      <SpinWheelClient
+                        data={data}
+                        prizeIndex={prizeIndex}
+                        mustSpin={mustSpin}
+                        onSpinStart={handleSpin}
+                        onSpinEnd={(selectedName) => {
+                          setMustSpin(false)
+                          const selected = filteredRecipes.find((r) => r.name === selectedName)
+                          if (selected) setSelectedRecipe(selected)
+                        }}
+                      />
                     </div>
 
                     {selectedRecipe && (
-                      <div style={styles.selectedRecipePreview} onClick={() => setIsModalOpen(true)}>
+                      <div style={styles.selectedRecipePreview} onClick={() => openRecipeModal(selectedRecipe)}>
                         <h2 style={styles.selectedTitle}>🎉 You got: {selectedRecipe.name}</h2>
                         <p>Click to see full recipe details!</p>
                       </div>
@@ -708,7 +817,7 @@ export default function Home() {
                     <h2 style={styles.sectionTitle}>Recipe Collection</h2>
                     <div style={styles.recipeGrid}>
                       {filteredRecipes.map((recipe, index) => (
-                        <RecipeCard key={index} recipe={recipe} expanded={expandedRecipe?.name === recipe.name} />
+                        <RecipeCard key={index} recipe={recipe} />
                       ))}
                     </div>
                   </div>
@@ -717,12 +826,9 @@ export default function Home() {
             ) : (
               <p style={{ marginTop: "1rem" }}>⚠️ No recipes match your filters.</p>
             )}
+
             {isModalOpen && selectedRecipe && (
-              <div style={styles.modalOverlay}>
-                <div style={styles.modalContent}>
-                  <RecipeCard recipe={selectedRecipe} expanded={true} onClose={() => setIsModalOpen(false)} />
-                </div>
-              </div>
+              <RecipeModal recipe={selectedRecipe} onClose={() => setIsModalOpen(false)} />
             )}
           </div>
         </div>
@@ -735,29 +841,38 @@ const styles: { [key: string]: React.CSSProperties } = {
   container: {
     fontFamily: "sans-serif",
     backgroundColor: "#f0f4f8",
-    padding: "2rem",
+    padding: "0.75rem",
     minHeight: "100vh",
-    textAlign: "center",
+    maxHeight: "100vh",
+    overflow: "hidden",
+  },
+  appLayout: {
+    display: "flex",
+    gap: "0.75rem",
+    height: "calc(100vh - 1.5rem)",
+    overflow: "hidden",
   },
   title: {
-    fontSize: "2.5rem",
+    fontSize: "1.5rem",
     color: "#1e3a8a",
-    marginBottom: "1rem",
+    marginBottom: "0.25rem",
+    textAlign: "center",
   },
   filters: {
     display: "flex",
     flexDirection: "column",
-    gap: "1rem",
-    maxWidth: "400px",
-    margin: "1rem auto 2rem auto",
+    gap: "0.3rem",
+    maxWidth: "100%",
+    margin: "0 auto 0.5rem auto",
     textAlign: "left",
   },
   input: {
-    padding: "0.5rem",
-    marginTop: "0.3rem",
+    padding: "0.3rem",
+    marginTop: "0.1rem",
     borderRadius: "6px",
     border: "1px solid #ccc",
     width: "100%",
+    height: "30px",
   },
   button: {
     marginTop: "1rem",
@@ -771,22 +886,24 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   card: {
     backgroundColor: "#fff",
-    padding: "1.5rem",
+    padding: "1rem",
     borderRadius: "10px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
     textAlign: "left",
-    height: "fit-content",
+    height: "100%",
     display: "flex",
     flexDirection: "column",
-    position: "relative",
+  },
+  cardHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   cardTitle: {
-    fontSize: "1.4rem",
+    fontSize: "1.1rem",
     color: "#1e3a8a",
     marginBottom: "0.5rem",
-  },
-  description: {
-    marginBottom: "1rem",
+    flex: 1,
   },
   truncatedDescription: {
     overflow: "hidden",
@@ -794,26 +911,28 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "-webkit-box",
     WebkitLineClamp: 2,
     WebkitBoxOrient: "vertical",
-    marginBottom: "1rem",
+    marginBottom: "0.5rem",
+    fontSize: "0.875rem",
   },
   basicInfo: {
     display: "flex",
-    gap: "1rem",
+    gap: "0.75rem",
     marginBottom: "0.5rem",
     color: "#4b5563",
+    fontSize: "0.75rem",
   },
   dietaryTagsContainer: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "0.3rem",
-    marginBottom: "1rem",
+    gap: "0.25rem",
+    marginBottom: "0.75rem",
   },
   dietaryTag: {
-    padding: "0.2rem 0.4rem",
+    padding: "0.15rem 0.3rem",
     backgroundColor: "#e0f2fe",
     color: "#0369a1",
-    borderRadius: "4px",
-    fontSize: "0.7rem",
+    borderRadius: "0.25rem",
+    fontSize: "0.65rem",
     fontWeight: 500,
   },
   expandedContent: {
@@ -823,58 +942,65 @@ const styles: { [key: string]: React.CSSProperties } = {
     position: "relative",
   },
   macros: {
-    marginBottom: "1rem",
+    marginBottom: "0.75rem",
     color: "#4b5563",
+    fontSize: "0.875rem",
   },
   recipeSection: {
-    marginTop: "1rem",
+    marginTop: "0.75rem",
   },
   list: {
-    paddingLeft: "1.5rem",
-    marginTop: "0.5rem",
+    paddingLeft: "1.25rem",
+    marginTop: "0.25rem",
+    fontSize: "0.875rem",
   },
   wheelContainer: {
     display: "flex",
     justifyContent: "center",
-    marginBottom: "1rem",
+    marginBottom: "0.25rem",
+    maxHeight: "calc(100vh - 300px)",
   },
   toggleContainer: {
     display: "flex",
     alignItems: "center",
-    gap: "0.5rem",
-    marginTop: "0.5rem",
+    gap: "0.3rem",
+    marginTop: "0.3rem",
   },
   checkbox: {
-    width: "20px",
-    height: "20px",
+    width: "16px",
+    height: "16px",
   },
   recipeGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-    gap: "2rem",
-    padding: "1rem",
-    maxWidth: "1200px",
-    margin: "0 auto",
+    gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
+    gap: "1rem",
+    maxHeight: "calc(100vh - 300px)",
+    overflow: "auto",
+    padding: "0.5rem",
   },
   wheelSection: {
-    marginBottom: "3rem",
+    marginBottom: "0.5rem",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   },
   recipesSection: {
-    marginTop: "2rem",
+    marginTop: "1rem",
   },
   sectionTitle: {
-    fontSize: "1.8rem",
-    color: "#1e3a8a",
-    marginBottom: "1.5rem",
-  },
-  selectedTitle: {
     fontSize: "1.5rem",
     color: "#1e3a8a",
     marginBottom: "1rem",
+    textAlign: "center",
+  },
+  selectedTitle: {
+    fontSize: "1.2rem",
+    color: "#1e3a8a",
+    marginBottom: "0.5rem",
   },
   selectedRecipe: {
     maxWidth: "400px",
-    margin: "2rem auto",
+    margin: "1rem auto",
   },
   recipeButton: {
     padding: "0.5rem 1rem",
@@ -895,6 +1021,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: "pointer",
     transition: "transform 0.2s",
     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    maxWidth: "300px",
+    textAlign: "center",
   },
   modalOverlay: {
     position: "fixed",
@@ -917,6 +1045,117 @@ const styles: { [key: string]: React.CSSProperties } = {
     overflow: "auto",
     width: "600px",
     zIndex: 1001,
+  },
+  recipeModalContent: {
+    position: "relative",
+    backgroundColor: "#fff",
+    borderRadius: "12px",
+    maxWidth: "90%",
+    maxHeight: "90vh",
+    overflow: "auto",
+    width: "600px",
+    padding: "1.5rem",
+    zIndex: 1001,
+  },
+  recipeModalHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "1rem",
+  },
+  recipeModalTitle: {
+    fontSize: "2rem",
+    color: "#1e3a8a",
+    margin: 0,
+    fontWeight: "bold",
+  },
+  recipeDescription: {
+    fontSize: "1rem",
+    marginBottom: "1rem",
+    color: "#4b5563",
+  },
+  recipeBasicInfo: {
+    display: "flex",
+    gap: "1rem",
+    marginBottom: "1rem",
+    color: "#4b5563",
+  },
+  recipeInfoItem: {
+    fontSize: "1rem",
+  },
+  recipeDietaryTags: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "0.5rem",
+    marginBottom: "1rem",
+  },
+  recipeDietaryTag: {
+    padding: "0.3rem 0.6rem",
+    backgroundColor: "#e0f2fe",
+    color: "#0369a1",
+    borderRadius: "0.25rem",
+    fontSize: "0.9rem",
+  },
+  recipeDivider: {
+    height: "1px",
+    backgroundColor: "#e5e7eb",
+    width: "100%",
+    margin: "1rem 0",
+  },
+  recipeSectionTitle: {
+    fontSize: "1.2rem",
+    color: "#1e3a8a",
+    marginBottom: "0.5rem",
+    fontWeight: "bold",
+  },
+  recipeAllergenList: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "0.5rem",
+    marginBottom: "1rem",
+  },
+  recipeAllergenBadge: {
+    padding: "0.3rem 0.6rem",
+    backgroundColor: "#fee2e2",
+    color: "#b91c1c",
+    borderRadius: "0.25rem",
+    fontSize: "0.9rem",
+  },
+  recipeList: {
+    paddingLeft: "1.5rem",
+    marginTop: "0.5rem",
+    marginBottom: "1rem",
+  },
+  recipeListItem: {
+    marginBottom: "0.5rem",
+    fontSize: "1rem",
+  },
+  recipeFiltersSection: {
+    backgroundColor: "#f8fafc",
+    padding: "1rem",
+    borderRadius: "0.5rem",
+    marginTop: "1rem",
+    marginBottom: "1.5rem",
+    border: "1px solid #e2e8f0",
+  },
+  recipeFilters: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+  },
+  closeRecipeButton: {
+    padding: "0.75rem 1.5rem",
+    backgroundColor: "#2563eb",
+    color: "#fff",
+    border: "none",
+    borderRadius: "0.5rem",
+    cursor: "pointer",
+    fontSize: "1rem",
+    fontWeight: "600",
+    marginTop: "1rem",
+    alignSelf: "flex-end",
+    display: "block",
+    marginLeft: "auto",
   },
   modalHeader: {
     display: "flex",
@@ -965,17 +1204,17 @@ const styles: { [key: string]: React.CSSProperties } = {
   allergenTags: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "0.5rem",
-    marginTop: "0.5rem",
+    gap: "0.3rem",
+    marginTop: "0.3rem",
   },
   allergenTag: {
-    padding: "0.3rem 0.6rem",
+    padding: "0.15rem 0.3rem",
     backgroundColor: "#e0e7ff",
     color: "#1e3a8a",
     border: "none",
     borderRadius: "4px",
     cursor: "pointer",
-    fontSize: "0.8rem",
+    fontSize: "0.7rem",
   },
   allergenInfo: {
     marginBottom: "1rem",
@@ -994,12 +1233,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "0.8rem",
   },
   filterSectionTitle: {
-    fontSize: "1rem",
-    marginBottom: "0.5rem",
+    fontSize: "0.9rem",
+    marginBottom: "0.3rem",
     color: "#1e3a8a",
   },
   dietaryPreferences: {
-    marginTop: "1rem",
+    marginTop: "0.3rem",
   },
   preferencesContainer: {
     display: "flex",
@@ -1009,11 +1248,12 @@ const styles: { [key: string]: React.CSSProperties } = {
   preferenceLabel: {
     display: "flex",
     alignItems: "center",
-    gap: "0.3rem",
+    gap: "0.2rem",
     cursor: "pointer",
-    padding: "0.3rem 0.6rem",
+    padding: "0.15rem 0.3rem",
     borderRadius: "4px",
     transition: "background-color 0.2s",
+    fontSize: "0.7rem",
   },
   preferenceCheckbox: {
     width: "16px",
@@ -1032,47 +1272,52 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: "0.5rem",
     marginTop: "0.5rem",
   },
-  sidebarLayout: {
-    display: "flex",
-    gap: "2rem",
-    width: "100%",
-  },
   sidebar: {
-    width: "250px",
+    width: "180px",
+    backgroundColor: "#fff",
+    borderRadius: "10px",
+    padding: "0.75rem",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  sidebarTitle: {
+    fontSize: "1.1rem",
+    color: "#1e3a8a",
+    marginBottom: "0.75rem",
+    borderBottom: "2px solid #e5e7eb",
+    paddingBottom: "0.5rem",
+    textAlign: "center",
+  },
+  mainContent: {
+    flex: 1,
+    overflow: "auto",
     backgroundColor: "#fff",
     borderRadius: "10px",
     padding: "1rem",
     boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-    height: "fit-content",
-    position: "sticky",
-    top: "2rem",
-  },
-  sidebarTitle: {
-    fontSize: "1.2rem",
-    color: "#1e3a8a",
-    marginBottom: "1rem",
-    borderBottom: "2px solid #e5e7eb",
-    paddingBottom: "0.5rem",
-  },
-  mainContent: {
-    flex: 1,
+    maxHeight: "calc(100vh - 1.5rem)",
   },
   favoritesList: {
     display: "flex",
     flexDirection: "column",
     gap: "0.5rem",
+    flex: 1,
+    overflow: "auto",
   },
   favoriteItem: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "0.5rem 0.8rem",
+    padding: "0.5rem",
     backgroundColor: "#f8fafc",
     borderRadius: "6px",
     cursor: "pointer",
     transition: "background-color 0.2s",
     border: "1px solid #e5e7eb",
-    marginBottom: "0.5rem",
+    fontSize: "0.8rem",
   },
   removeButton: {
     backgroundColor: "transparent",
@@ -1090,12 +1335,6 @@ const styles: { [key: string]: React.CSSProperties } = {
     textAlign: "center",
     padding: "1rem 0",
   },
-  cardHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "0.5rem",
-  },
   favoriteIcon: {
     background: "transparent",
     border: "none",
@@ -1103,6 +1342,14 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: "pointer",
     padding: "0",
     marginLeft: "0.5rem",
+    lineHeight: 1,
+  },
+  favoriteIconLarge: {
+    background: "transparent",
+    border: "none",
+    fontSize: "2rem",
+    cursor: "pointer",
+    padding: "0",
     lineHeight: 1,
   },
   modalButtonsContainer: {
