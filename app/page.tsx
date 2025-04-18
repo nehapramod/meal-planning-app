@@ -1,9 +1,9 @@
 "use client"
 import { useState } from "react"
 import type React from "react"
-
 import Head from "next/head"
 import dynamic from "next/dynamic"
+import { Home, Heart } from "lucide-react"
 
 const SpinWheelClient = dynamic(() => import("./components/SpinWheelClient"), {
   ssr: false,
@@ -337,7 +337,8 @@ const allRecipes: Recipe[] = [
   },
 ]
 
-export default function Home() {
+function RecipeApp() {
+  // Change the filters state to remove customAllergy
   const [filters, setFilters] = useState({
     maxPrepTime: 30,
     maxCalories: 600,
@@ -348,10 +349,12 @@ export default function Home() {
   const [prizeIndex, setPrizeIndex] = useState(0)
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null)
   const [wheelEnabled, setWheelEnabled] = useState(true)
-  const [expandedRecipe, setExpandedRecipe] = useState<Recipe | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [favorites, setFavorites] = useState<Recipe[]>([])
+  const [activeTab, setActiveTab] = useState("home")
+  const [showFilters, setShowFilters] = useState(false)
 
+  // Update the allergyList to use only the allergies field
   const allergyList = filters.allergies
     .split(",")
     .map((a) => a.trim().toLowerCase())
@@ -529,15 +532,7 @@ export default function Home() {
     )
   }
 
-  const RecipeCard = ({
-    recipe,
-    expanded = false,
-    onClose,
-  }: {
-    recipe: Recipe
-    expanded?: boolean
-    onClose?: () => void
-  }) => {
+  const RecipeCard = ({ recipe }: { recipe: Recipe }) => {
     const isFavorite = favorites.some((fav) => fav.name === recipe.name)
 
     return (
@@ -567,78 +562,9 @@ export default function Home() {
             </span>
           ))}
         </div>
-        {expanded && (
-          <div style={styles.expandedContent}>
-            <p style={styles.macros}>
-              <strong>Macros:</strong> {recipe.macros}
-            </p>
-
-            {recipe.allergens.length > 0 && (
-              <div style={styles.allergenInfo}>
-                <h3>Contains:</h3>
-                <div style={styles.allergenList}>
-                  {recipe.allergens.map((allergen, index) => (
-                    <span key={index} style={styles.allergenBadge}>
-                      {allergen}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div style={styles.recipeSection}>
-              <h3>Ingredients:</h3>
-              <ul style={styles.list}>
-                {recipe.ingredients.map((ingredient, index) => (
-                  <li key={index}>{ingredient}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div style={styles.recipeSection}>
-              <h3>Instructions:</h3>
-              <ol style={styles.list}>
-                {recipe.instructions.map((instruction, index) => (
-                  <li key={index}>{instruction}</li>
-                ))}
-              </ol>
-            </div>
-
-            <div style={styles.currentFiltersSection}>
-              <h3>Current Filters:</h3>
-              <div style={styles.currentFilters}>
-                <p>
-                  <strong>Max Prep Time:</strong> {filters.maxPrepTime} mins
-                </p>
-                <p>
-                  <strong>Max Calories:</strong> {filters.maxCalories}
-                </p>
-                {allergyList.length > 0 && (
-                  <p>
-                    <strong>Allergies:</strong> {allergyList.join(", ")}
-                  </p>
-                )}
-                {filters.dietaryPreferences.length > 0 && (
-                  <p>
-                    <strong>Dietary Preferences:</strong>{" "}
-                    {filters.dietaryPreferences.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div style={styles.modalButtonsContainer}>
-              <button onClick={() => (onClose ? onClose() : setExpandedRecipe(null))} style={styles.recipeButton}>
-                Close Recipe
-              </button>
-            </div>
-          </div>
-        )}
-        {!expanded && (
-          <button onClick={() => openRecipeModal(recipe)} style={styles.recipeButton}>
-            See Recipe
-          </button>
-        )}
+        <button onClick={() => openRecipeModal(recipe)} style={styles.recipeButton}>
+          See Recipe
+        </button>
       </div>
     )
   }
@@ -652,89 +578,62 @@ export default function Home() {
     { label: "Low-Carb", value: "low-carb" },
   ]
 
-  return (
-    <>
-      <Head>
-        <title>Recipe Spin Wheel</title>
-      </Head>
-      <main style={styles.container}>
-        <div style={styles.appLayout}>
-          <div style={styles.sidebar}>
-            <h2 style={styles.sidebarTitle}>Favorite Recipes</h2>
-            {favorites.length === 0 ? (
-              <p style={styles.emptyMessage}>No favorites yet. Click the heart icon on recipes to add them here!</p>
-            ) : (
-              <div style={styles.favoritesList}>
-                {favorites.map((recipe, index) => (
-                  <div key={index} style={styles.favoriteItem} onClick={() => openRecipeModal(recipe)}>
-                    <span>{recipe.name}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        toggleFavorite(recipe)
-                      }}
-                      style={styles.removeButton}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-          <div style={styles.mainContent}>
-            <h1 style={styles.title}>🎡 Recipe Spin Wheel</h1>
+  const renderHomeTab = () => (
+    <div style={styles.tabContent}>
+      <div style={styles.filterToggle}>
+        <button onClick={() => setShowFilters(!showFilters)} style={styles.filterToggleButton}>
+          {showFilters ? "Hide Filters" : "Show Filters"}
+        </button>
+      </div>
 
-            <div style={styles.filters}>
-              <label>
-                Max Prep Time (mins):
-                <input
-                  type="number"
-                  value={filters.maxPrepTime}
-                  onChange={(e) => setFilters({ ...filters, maxPrepTime: Number(e.target.value) })}
-                  style={styles.input}
-                />
-              </label>
-              <label>
-                Max Calories:
-                <input
-                  type="number"
-                  value={filters.maxCalories}
-                  onChange={(e) => setFilters({ ...filters, maxCalories: Number(e.target.value) })}
-                  style={styles.input}
-                />
-              </label>
-              <label>
-                Allergies (comma-separated):
-                <input
-                  type="text"
-                  value={filters.allergies}
-                  onChange={(e) => setFilters({ ...filters, allergies: e.target.value })}
-                  placeholder="e.g. dairy, peanuts"
-                  style={styles.input}
-                />
-              </label>
+      {showFilters && (
+        <div style={styles.filtersContainer}>
+          <div style={styles.filters}>
+            <label style={styles.filterLabel}>
+              Max Prep Time (mins):
+              <input
+                type="range"
+                min="5"
+                max="60"
+                value={filters.maxPrepTime}
+                onChange={(e) => setFilters({ ...filters, maxPrepTime: Number(e.target.value) })}
+                style={styles.rangeInput}
+              />
+              <span style={styles.rangeValue}>{filters.maxPrepTime} mins</span>
+            </label>
+            <label style={styles.filterLabel}>
+              Max Calories:
+              <input
+                type="range"
+                min="100"
+                max="1000"
+                step="50"
+                value={filters.maxCalories}
+                onChange={(e) => setFilters({ ...filters, maxCalories: Number(e.target.value) })}
+                style={styles.rangeInput}
+              />
+              <span style={styles.rangeValue}>{filters.maxCalories} cal</span>
+            </label>
+            {/* Replace the allergies filter section with this updated version */}
+            <div style={styles.filterSection}>
+              <h3 style={styles.filterSectionTitle}>Allergies:</h3>
               <div style={styles.allergenTags}>
                 {commonAllergens.map((allergen) => {
-                  const isSelected = filters.allergies
-                    .split(",")
-                    .map((a) => a.trim())
-                    .filter(Boolean)
-                    .includes(allergen)
+                  const isSelected = allergyList.includes(allergen)
 
                   return (
                     <button
                       key={allergen}
                       onClick={() => {
-                        const currentAllergies = filters.allergies
-                          .split(",")
-                          .map((a) => a.trim())
-                          .filter(Boolean)
+                        const currentAllergies = allergyList
 
                         // Toggle the allergen
-                        const newAllergies = isSelected
-                          ? currentAllergies.filter((a) => a !== allergen)
-                          : [...currentAllergies, allergen]
+                        let newAllergies
+                        if (isSelected) {
+                          newAllergies = currentAllergies.filter((a) => a !== allergen)
+                        } else {
+                          newAllergies = [...currentAllergies, allergen]
+                        }
 
                         setFilters({ ...filters, allergies: newAllergies.join(", ") })
                       }}
@@ -749,148 +648,449 @@ export default function Home() {
                   )
                 })}
               </div>
-              <div style={styles.dietaryPreferences}>
-                <h3 style={styles.filterSectionTitle}>Dietary Preferences:</h3>
-                <div style={styles.preferencesContainer}>
-                  {dietaryOptions.map((option) => (
-                    <label
-                      key={option.value}
-                      style={{
-                        ...styles.preferenceLabel,
-                        backgroundColor: filters.dietaryPreferences.includes(option.value) ? "#dbeafe" : "#f3f4f6",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={filters.dietaryPreferences.includes(option.value)}
-                        onChange={(e) => {
-                          const newPreferences = e.target.checked
-                            ? [...filters.dietaryPreferences, option.value]
-                            : filters.dietaryPreferences.filter((p) => p !== option.value)
-                          setFilters({ ...filters, dietaryPreferences: newPreferences })
-                        }}
-                        style={styles.preferenceCheckbox}
-                      />
-                      {option.label}
-                    </label>
-                  ))}
-                </div>
+              <div style={styles.customAllergyInput}>
+                <label style={styles.customAllergyLabel}>
+                  Allergies (comma separated):
+                  <input
+                    type="text"
+                    value={filters.allergies}
+                    onChange={(e) => setFilters({ ...filters, allergies: e.target.value })}
+                    placeholder="e.g., dairy, gluten, shrimp, etc."
+                    style={styles.textInput}
+                  />
+                </label>
               </div>
-              <label style={styles.toggleContainer}>
-                <input
-                  type="checkbox"
-                  checked={wheelEnabled}
-                  onChange={(e) => setWheelEnabled(e.target.checked)}
-                  style={styles.checkbox}
-                />
-                Enable Wheel
-              </label>
             </div>
-
-            {filteredRecipes.length > 0 ? (
-              <>
-                {wheelEnabled ? (
-                  <div style={styles.wheelSection}>
-                    <div style={styles.wheelContainer}>
-                      <SpinWheelClient
-                        data={data}
-                        prizeIndex={prizeIndex}
-                        mustSpin={mustSpin}
-                        onSpinStart={handleSpin}
-                        onSpinEnd={(selectedName) => {
-                          setMustSpin(false)
-                          const selected = filteredRecipes.find((r) => r.name === selectedName)
-                          if (selected) setSelectedRecipe(selected)
-                        }}
-                      />
-                    </div>
-
-                    {selectedRecipe && (
-                      <div style={styles.selectedRecipePreview} onClick={() => openRecipeModal(selectedRecipe)}>
-                        <h2 style={styles.selectedTitle}>🎉 You got: {selectedRecipe.name}</h2>
-                        <p>Click to see full recipe details!</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div style={styles.recipesSection}>
-                    <h2 style={styles.sectionTitle}>Recipe Collection</h2>
-                    <div style={styles.recipeGrid}>
-                      {filteredRecipes.map((recipe, index) => (
-                        <RecipeCard key={index} recipe={recipe} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <p style={{ marginTop: "1rem" }}>⚠️ No recipes match your filters.</p>
-            )}
-
-            {isModalOpen && selectedRecipe && (
-              <RecipeModal recipe={selectedRecipe} onClose={() => setIsModalOpen(false)} />
-            )}
+            <div style={styles.filterSection}>
+              <h3 style={styles.filterSectionTitle}>Dietary Preferences:</h3>
+              <div style={styles.preferencesContainer}>
+                {dietaryOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    style={{
+                      ...styles.preferenceLabel,
+                      backgroundColor: filters.dietaryPreferences.includes(option.value) ? "#dbeafe" : "#f3f4f6",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filters.dietaryPreferences.includes(option.value)}
+                      onChange={(e) => {
+                        const newPreferences = e.target.checked
+                          ? [...filters.dietaryPreferences, option.value]
+                          : filters.dietaryPreferences.filter((p) => p !== option.value)
+                        setFilters({ ...filters, dietaryPreferences: newPreferences })
+                      }}
+                      style={styles.preferenceCheckbox}
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <label style={styles.toggleContainer}>
+              <input
+                type="checkbox"
+                checked={wheelEnabled}
+                onChange={(e) => setWheelEnabled(e.target.checked)}
+                style={styles.checkbox}
+              />
+              <span style={styles.toggleLabel}>Enable Wheel</span>
+            </label>
           </div>
         </div>
-      </main>
+      )}
+
+      {filteredRecipes.length > 0 ? (
+        <>
+          {wheelEnabled ? (
+            <div style={styles.wheelSection}>
+              <div style={styles.wheelContainer}>
+                <SpinWheelClient
+                  data={data}
+                  prizeIndex={prizeIndex}
+                  mustSpin={mustSpin}
+                  onSpinStart={handleSpin}
+                  onSpinEnd={(selectedName) => {
+                    setMustSpin(false)
+                    const selected = filteredRecipes.find((r) => r.name === selectedName)
+                    if (selected) setSelectedRecipe(selected)
+                  }}
+                />
+              </div>
+
+              {selectedRecipe && (
+                <div style={styles.selectedRecipePreview} onClick={() => openRecipeModal(selectedRecipe)}>
+                  <h2 style={styles.selectedTitle}>🎉 You got: {selectedRecipe.name}</h2>
+                  <p>Tap to see full recipe details!</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={styles.recipesSection}>
+              <h2 style={styles.sectionTitle}>Recipe Collection</h2>
+              <div style={styles.recipeGrid}>
+                {filteredRecipes.map((recipe, index) => (
+                  <RecipeCard key={index} recipe={recipe} />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
+        <p style={styles.noRecipesMessage}>⚠️ No recipes match your filters.</p>
+      )}
+    </div>
+  )
+
+  const renderFavoritesTab = () => (
+    <div style={styles.tabContent}>
+      <h2 style={styles.tabTitle}>Favorite Recipes</h2>
+      {favorites.length === 0 ? (
+        <div style={styles.emptyStateContainer}>
+          <p style={styles.emptyMessage}>No favorites yet. Tap the heart icon on recipes to add them here!</p>
+          <button onClick={() => setActiveTab("home")} style={styles.emptyStateButton}>
+            Find Recipes
+          </button>
+        </div>
+      ) : (
+        <div style={styles.favoritesList}>
+          {favorites.map((recipe, index) => (
+            <div key={index} style={styles.favoriteItem} onClick={() => openRecipeModal(recipe)}>
+              <div style={styles.favoriteItemContent}>
+                <h3 style={styles.favoriteItemTitle}>{recipe.name}</h3>
+                <p style={styles.favoriteItemDescription}>{recipe.description}</p>
+                <div style={styles.favoriteItemInfo}>
+                  <span>⏱️ {recipe.prepTime} mins</span>
+                  <span>🔥 {recipe.calories} cal</span>
+                </div>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  toggleFavorite(recipe)
+                }}
+                style={styles.removeButton}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <>
+      <Head>
+        <title>Recipe Spin Wheel</title>
+      </Head>
+      <div style={styles.mobileContainer}>
+        <div style={styles.mobileFrame}>
+          <div style={styles.statusBar}>
+            <div style={styles.statusBarTime}>9:41</div>
+            <div style={styles.statusBarIcons}>
+              <span>📶</span>
+              <span>📡</span>
+              <span>🔋</span>
+            </div>
+          </div>
+
+          <div style={styles.appHeader}>
+            <h1 style={styles.appTitle}>🎡 Recipe Spin Wheel</h1>
+          </div>
+
+          <div style={styles.appContent}>{activeTab === "home" ? renderHomeTab() : renderFavoritesTab()}</div>
+
+          <div style={styles.bottomNav}>
+            <button
+              style={activeTab === "home" ? styles.bottomNavItemActive : styles.bottomNavItem}
+              onClick={() => setActiveTab("home")}
+            >
+              <Home size={24} />
+              <span style={styles.bottomNavText}>Home</span>
+            </button>
+            <button
+              style={activeTab === "favorites" ? styles.bottomNavItemActive : styles.bottomNavItem}
+              onClick={() => setActiveTab("favorites")}
+            >
+              <Heart size={24} />
+              <span style={styles.bottomNavText}>Favorites</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {isModalOpen && selectedRecipe && <RecipeModal recipe={selectedRecipe} onClose={() => setIsModalOpen(false)} />}
     </>
   )
 }
 
+export default RecipeApp
+
 const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    fontFamily: "sans-serif",
-    backgroundColor: "#f0f4f8",
-    padding: "0.75rem",
-    minHeight: "100vh",
-    maxHeight: "100vh",
-    overflow: "hidden",
-  },
-  appLayout: {
+  mobileContainer: {
     display: "flex",
-    gap: "0.75rem",
-    height: "calc(100vh - 1.5rem)",
-    overflow: "hidden",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100vh",
+    backgroundColor: "#f0f4f8",
+    padding: "1rem",
   },
-  title: {
-    fontSize: "1.5rem",
-    color: "#1e3a8a",
-    marginBottom: "0.25rem",
+  mobileFrame: {
+    width: "435px",
+    height: "842px",
+    backgroundColor: "#fff",
+    borderRadius: "40px",
+    overflow: "hidden",
+    position: "relative",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+    border: "10px solid #000",
+  },
+  statusBar: {
+    height: "44px",
+    backgroundColor: "#fff",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "0 20px",
+    borderBottom: "1px solid #f0f0f0",
+  },
+  statusBarTime: {
+    fontWeight: "bold",
+  },
+  statusBarIcons: {
+    display: "flex",
+    gap: "5px",
+  },
+  appHeader: {
+    padding: "10px 16px",
+    backgroundColor: "#1e3a8a",
+    color: "#fff",
     textAlign: "center",
+  },
+  appTitle: {
+    margin: 0,
+    fontSize: "1.25rem",
+    fontWeight: "600",
+  },
+  appContent: {
+    height: "calc(812px - 44px - 43px - 60px - 20px)",
+    overflow: "auto",
+    padding: "0",
+    backgroundColor: "#f8fafc",
+  },
+  tabContent: {
+    padding: "16px",
+    height: "100%",
+    overflow: "auto",
+  },
+  tabTitle: {
+    fontSize: "1.25rem",
+    fontWeight: "600",
+    marginBottom: "1rem",
+    color: "#1e3a8a",
+  },
+  bottomNav: {
+    height: "60px",
+    backgroundColor: "#fff",
+    display: "flex",
+    justifyContent: "space-around",
+    alignItems: "center",
+    borderTop: "1px solid #f0f0f0",
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+  },
+  bottomNavItem: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#64748b",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "8px 0",
+    width: "50%",
+  },
+  bottomNavItemActive: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#1e3a8a",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "8px 0",
+    width: "50%",
+  },
+  bottomNavText: {
+    fontSize: "0.7rem",
+    marginTop: "4px",
+  },
+  filterToggle: {
+    marginBottom: "10px",
+  },
+  filterToggleButton: {
+    backgroundColor: "#1e3a8a",
+    color: "#fff",
+    border: "none",
+    borderRadius: "20px",
+    padding: "8px 16px",
+    fontSize: "0.9rem",
+    cursor: "pointer",
+    width: "100%",
+  },
+  filtersContainer: {
+    backgroundColor: "#fff",
+    borderRadius: "12px",
+    padding: "12px",
+    marginBottom: "16px",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
   },
   filters: {
     display: "flex",
     flexDirection: "column",
-    gap: "0.3rem",
-    maxWidth: "100%",
-    margin: "0 auto 0.5rem auto",
-    textAlign: "left",
+    gap: "12px",
   },
-  input: {
-    padding: "0.3rem",
-    marginTop: "0.1rem",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
+  filterLabel: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    fontSize: "0.9rem",
+    color: "#4b5563",
+  },
+  rangeInput: {
     width: "100%",
-    height: "30px",
+    accentColor: "#1e3a8a",
   },
-  button: {
-    marginTop: "1rem",
-    padding: "0.8rem 1.5rem",
-    backgroundColor: "#1e3a8a",
-    color: "#fff",
+  rangeValue: {
+    fontSize: "0.8rem",
+    color: "#1e3a8a",
+    fontWeight: "500",
+  },
+  filterSection: {
+    marginTop: "4px",
+  },
+  filterSectionTitle: {
+    fontSize: "0.9rem",
+    marginBottom: "8px",
+    color: "#4b5563",
+  },
+  allergenTags: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "6px",
+  },
+  allergenTag: {
+    padding: "6px 10px",
+    borderRadius: "16px",
+    fontSize: "0.8rem",
     border: "none",
-    borderRadius: "8px",
     cursor: "pointer",
-    fontSize: "1rem",
+  },
+  customAllergyInput: {
+    marginTop: "10px",
+  },
+  customAllergyLabel: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    fontSize: "0.9rem",
+    color: "#4b5563",
+  },
+  textInput: {
+    padding: "8px 12px",
+    borderRadius: "8px",
+    border: "1px solid #d1d5db",
+    fontSize: "0.9rem",
+    marginTop: "4px",
+  },
+  preferencesContainer: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "6px",
+  },
+  preferenceLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    padding: "6px 10px",
+    borderRadius: "16px",
+    fontSize: "0.8rem",
+    cursor: "pointer",
+  },
+  preferenceCheckbox: {
+    width: "16px",
+    height: "16px",
+    accentColor: "#1e3a8a",
+  },
+  toggleContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "8px",
+  },
+  toggleLabel: {
+    fontSize: "0.9rem",
+    color: "#4b5563",
+  },
+  checkbox: {
+    width: "16px",
+    height: "16px",
+    accentColor: "#1e3a8a",
+  },
+  wheelSection: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "10px 0",
+  },
+  wheelContainer: {
+    display: "flex",
+    justifyContent: "center",
+    width: "100%",
+    maxWidth: "240px", // Reduced from 280px
+    margin: "0 auto",
+  },
+  selectedRecipePreview: {
+    backgroundColor: "#fff",
+    padding: "16px",
+    borderRadius: "12px",
+    marginTop: "16px",
+    cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    width: "90%",
+    textAlign: "center",
+  },
+  selectedTitle: {
+    fontSize: "1.1rem",
+    color: "#1e3a8a",
+    marginBottom: "8px",
+  },
+  recipesSection: {
+    padding: "10px 0",
+  },
+  sectionTitle: {
+    fontSize: "1.1rem",
+    color: "#1e3a8a",
+    marginBottom: "12px",
+    textAlign: "center",
+  },
+  recipeGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    gap: "12px",
+    padding: "0 4px",
   },
   card: {
     backgroundColor: "#fff",
-    padding: "1rem",
-    borderRadius: "10px",
-    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-    textAlign: "left",
-    height: "100%",
+    padding: "16px",
+    borderRadius: "12px",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
     display: "flex",
     flexDirection: "column",
   },
@@ -902,7 +1102,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   cardTitle: {
     fontSize: "1.1rem",
     color: "#1e3a8a",
-    marginBottom: "0.5rem",
+    marginBottom: "8px",
     flex: 1,
   },
   truncatedDescription: {
@@ -911,118 +1111,123 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "-webkit-box",
     WebkitLineClamp: 2,
     WebkitBoxOrient: "vertical",
-    marginBottom: "0.5rem",
-    fontSize: "0.875rem",
+    marginBottom: "8px",
+    fontSize: "0.9rem",
+    color: "#4b5563",
   },
   basicInfo: {
     display: "flex",
-    gap: "0.75rem",
-    marginBottom: "0.5rem",
+    gap: "12px",
+    marginBottom: "8px",
     color: "#4b5563",
-    fontSize: "0.75rem",
+    fontSize: "0.8rem",
   },
   dietaryTagsContainer: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "0.25rem",
-    marginBottom: "0.75rem",
+    gap: "4px",
+    marginBottom: "12px",
   },
   dietaryTag: {
-    padding: "0.15rem 0.3rem",
+    padding: "4px 8px",
     backgroundColor: "#e0f2fe",
     color: "#0369a1",
-    borderRadius: "0.25rem",
-    fontSize: "0.65rem",
-    fontWeight: 500,
-  },
-  expandedContent: {
-    marginTop: "1rem",
-    borderTop: "1px solid #e5e7eb",
-    paddingTop: "1rem",
-    position: "relative",
-  },
-  macros: {
-    marginBottom: "0.75rem",
-    color: "#4b5563",
-    fontSize: "0.875rem",
-  },
-  recipeSection: {
-    marginTop: "0.75rem",
-  },
-  list: {
-    paddingLeft: "1.25rem",
-    marginTop: "0.25rem",
-    fontSize: "0.875rem",
-  },
-  wheelContainer: {
-    display: "flex",
-    justifyContent: "center",
-    marginBottom: "0.25rem",
-    maxHeight: "calc(100vh - 300px)",
-  },
-  toggleContainer: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.3rem",
-    marginTop: "0.3rem",
-  },
-  checkbox: {
-    width: "16px",
-    height: "16px",
-  },
-  recipeGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-    gap: "1rem",
-    maxHeight: "calc(100vh - 300px)",
-    overflow: "auto",
-    padding: "0.5rem",
-  },
-  wheelSection: {
-    marginBottom: "0.5rem",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
-  recipesSection: {
-    marginTop: "1rem",
-  },
-  sectionTitle: {
-    fontSize: "1.5rem",
-    color: "#1e3a8a",
-    marginBottom: "1rem",
-    textAlign: "center",
-  },
-  selectedTitle: {
-    fontSize: "1.2rem",
-    color: "#1e3a8a",
-    marginBottom: "0.5rem",
-  },
-  selectedRecipe: {
-    maxWidth: "400px",
-    margin: "1rem auto",
+    borderRadius: "12px",
+    fontSize: "0.7rem",
+    fontWeight: "500",
   },
   recipeButton: {
-    padding: "0.5rem 1rem",
-    backgroundColor: "#2563eb",
+    padding: "10px",
+    backgroundColor: "#1e3a8a",
     color: "#fff",
     border: "none",
-    borderRadius: "6px",
+    borderRadius: "8px",
     cursor: "pointer",
     fontSize: "0.9rem",
     marginTop: "auto",
-    transition: "background-color 0.2s",
+    fontWeight: "500",
   },
-  selectedRecipePreview: {
-    backgroundColor: "#fff",
-    padding: "1rem",
-    borderRadius: "8px",
-    marginTop: "1rem",
-    cursor: "pointer",
-    transition: "transform 0.2s",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    maxWidth: "300px",
+  noRecipesMessage: {
     textAlign: "center",
+    padding: "20px",
+    color: "#ef4444",
+    backgroundColor: "#fee2e2",
+    borderRadius: "8px",
+    margin: "20px 0",
+  },
+  favoritesList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  favoriteItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "12px",
+    backgroundColor: "#fff",
+    borderRadius: "12px",
+    cursor: "pointer",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+  },
+  favoriteItemContent: {
+    flex: 1,
+  },
+  favoriteItemTitle: {
+    fontSize: "1rem",
+    color: "#1e3a8a",
+    marginBottom: "4px",
+  },
+  favoriteItemDescription: {
+    fontSize: "0.8rem",
+    color: "#4b5563",
+    marginBottom: "4px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    display: "-webkit-box",
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: "vertical",
+  },
+  favoriteItemInfo: {
+    display: "flex",
+    gap: "12px",
+    fontSize: "0.75rem",
+    color: "#6b7280",
+  },
+  removeButton: {
+    backgroundColor: "#f3f4f6",
+    border: "none",
+    color: "#6b7280",
+    cursor: "pointer",
+    fontSize: "0.9rem",
+    width: "24px",
+    height: "24px",
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyStateContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "40px 20px",
+    textAlign: "center",
+  },
+  emptyMessage: {
+    color: "#6b7280",
+    fontSize: "0.9rem",
+    marginBottom: "20px",
+  },
+  emptyStateButton: {
+    padding: "10px 20px",
+    backgroundColor: "#1e3a8a",
+    color: "#fff",
+    border: "none",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "0.9rem",
   },
   modalOverlay: {
     position: "fixed",
@@ -1036,304 +1241,117 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     zIndex: 1000,
   },
-  modalContent: {
-    position: "relative",
-    backgroundColor: "#fff",
-    borderRadius: "12px",
-    maxWidth: "90%",
-    maxHeight: "90vh",
-    overflow: "auto",
-    width: "600px",
-    zIndex: 1001,
-  },
   recipeModalContent: {
     position: "relative",
     backgroundColor: "#fff",
-    borderRadius: "12px",
+    borderRadius: "40px",
     maxWidth: "90%",
     maxHeight: "90vh",
     overflow: "auto",
-    width: "600px",
-    padding: "1.5rem",
+    width: "430px",
+    padding: "20px",
     zIndex: 1001,
   },
   recipeModalHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "1rem",
+    marginBottom: "16px",
   },
   recipeModalTitle: {
-    fontSize: "2rem",
+    fontSize: "1.5rem",
     color: "#1e3a8a",
     margin: 0,
     fontWeight: "bold",
   },
   recipeDescription: {
-    fontSize: "1rem",
-    marginBottom: "1rem",
+    fontSize: "0.9rem",
+    marginBottom: "12px",
     color: "#4b5563",
   },
   recipeBasicInfo: {
     display: "flex",
-    gap: "1rem",
-    marginBottom: "1rem",
+    gap: "16px",
+    marginBottom: "12px",
     color: "#4b5563",
   },
   recipeInfoItem: {
-    fontSize: "1rem",
+    fontSize: "0.9rem",
   },
   recipeDietaryTags: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "0.5rem",
-    marginBottom: "1rem",
+    gap: "6px",
+    marginBottom: "16px",
   },
   recipeDietaryTag: {
-    padding: "0.3rem 0.6rem",
+    padding: "4px 10px",
     backgroundColor: "#e0f2fe",
     color: "#0369a1",
-    borderRadius: "0.25rem",
-    fontSize: "0.9rem",
+    borderRadius: "16px",
+    fontSize: "0.8rem",
   },
   recipeDivider: {
     height: "1px",
     backgroundColor: "#e5e7eb",
     width: "100%",
-    margin: "1rem 0",
+    margin: "12px 0",
+  },
+  recipeSection: {
+    marginBottom: "16px",
   },
   recipeSectionTitle: {
-    fontSize: "1.2rem",
+    fontSize: "1.1rem",
     color: "#1e3a8a",
-    marginBottom: "0.5rem",
-    fontWeight: "bold",
+    marginBottom: "8px",
+    fontWeight: "600",
   },
   recipeAllergenList: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "0.5rem",
-    marginBottom: "1rem",
+    gap: "6px",
+    marginBottom: "12px",
   },
   recipeAllergenBadge: {
-    padding: "0.3rem 0.6rem",
+    padding: "4px 10px",
     backgroundColor: "#fee2e2",
     color: "#b91c1c",
-    borderRadius: "0.25rem",
-    fontSize: "0.9rem",
+    borderRadius: "16px",
+    fontSize: "0.8rem",
   },
   recipeList: {
-    paddingLeft: "1.5rem",
-    marginTop: "0.5rem",
-    marginBottom: "1rem",
+    paddingLeft: "20px",
+    marginTop: "8px",
+    marginBottom: "12px",
   },
   recipeListItem: {
-    marginBottom: "0.5rem",
-    fontSize: "1rem",
+    marginBottom: "6px",
+    fontSize: "0.9rem",
   },
   recipeFiltersSection: {
     backgroundColor: "#f8fafc",
-    padding: "1rem",
-    borderRadius: "0.5rem",
-    marginTop: "1rem",
-    marginBottom: "1.5rem",
+    padding: "12px",
+    borderRadius: "12px",
+    marginTop: "16px",
+    marginBottom: "20px",
     border: "1px solid #e2e8f0",
   },
   recipeFilters: {
     display: "flex",
     flexDirection: "column",
-    gap: "0.5rem",
+    gap: "6px",
+    fontSize: "0.8rem",
   },
   closeRecipeButton: {
-    padding: "0.75rem 1.5rem",
-    backgroundColor: "#2563eb",
+    padding: "12px",
+    backgroundColor: "#1e3a8a",
     color: "#fff",
     border: "none",
-    borderRadius: "0.5rem",
-    cursor: "pointer",
-    fontSize: "1rem",
-    fontWeight: "600",
-    marginTop: "1rem",
-    alignSelf: "flex-end",
-    display: "block",
-    marginLeft: "auto",
-  },
-  modalHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "1rem",
-    borderBottom: "1px solid #e5e7eb",
-    paddingBottom: "0.5rem",
-  },
-  modalTitle: {
-    fontSize: "1.8rem",
-    color: "#1e3a8a",
-    margin: 0,
-  },
-  modalActions: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-  },
-  modalFavoriteButton: {
-    background: "transparent",
-    border: "none",
-    fontSize: "1.5rem",
-    cursor: "pointer",
-    padding: "0.5rem",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  closeButton: {
-    backgroundColor: "#f3f4f6",
-    border: "none",
-    fontSize: "1.5rem",
-    cursor: "pointer",
-    color: "#4b5563",
-    width: "32px",
-    height: "32px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "50%",
-    zIndex: 1002,
-    padding: 0,
-  },
-  allergenTags: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "0.3rem",
-    marginTop: "0.3rem",
-  },
-  allergenTag: {
-    padding: "0.15rem 0.3rem",
-    backgroundColor: "#e0e7ff",
-    color: "#1e3a8a",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    fontSize: "0.7rem",
-  },
-  allergenInfo: {
-    marginBottom: "1rem",
-  },
-  allergenList: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "0.5rem",
-    marginTop: "0.5rem",
-  },
-  allergenBadge: {
-    padding: "0.2rem 0.5rem",
-    backgroundColor: "#fee2e2",
-    color: "#b91c1c",
-    borderRadius: "4px",
-    fontSize: "0.8rem",
-  },
-  filterSectionTitle: {
-    fontSize: "0.9rem",
-    marginBottom: "0.3rem",
-    color: "#1e3a8a",
-  },
-  dietaryPreferences: {
-    marginTop: "0.3rem",
-  },
-  preferencesContainer: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "0.5rem",
-  },
-  preferenceLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.2rem",
-    cursor: "pointer",
-    padding: "0.15rem 0.3rem",
-    borderRadius: "4px",
-    transition: "background-color 0.2s",
-    fontSize: "0.7rem",
-  },
-  preferenceCheckbox: {
-    width: "16px",
-    height: "16px",
-  },
-  currentFiltersSection: {
-    marginTop: "1.5rem",
-    padding: "1rem",
-    backgroundColor: "#f8fafc",
     borderRadius: "8px",
-    border: "1px solid #e2e8f0",
-  },
-  currentFilters: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-    marginTop: "0.5rem",
-  },
-  sidebar: {
-    width: "180px",
-    backgroundColor: "#fff",
-    borderRadius: "10px",
-    padding: "0.75rem",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-    height: "100%",
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-  },
-  sidebarTitle: {
-    fontSize: "1.1rem",
-    color: "#1e3a8a",
-    marginBottom: "0.75rem",
-    borderBottom: "2px solid #e5e7eb",
-    paddingBottom: "0.5rem",
-    textAlign: "center",
-  },
-  mainContent: {
-    flex: 1,
-    overflow: "auto",
-    backgroundColor: "#fff",
-    borderRadius: "10px",
-    padding: "1rem",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-    maxHeight: "calc(100vh - 1.5rem)",
-  },
-  favoritesList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-    flex: 1,
-    overflow: "auto",
-  },
-  favoriteItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "0.5rem",
-    backgroundColor: "#f8fafc",
-    borderRadius: "6px",
     cursor: "pointer",
-    transition: "background-color 0.2s",
-    border: "1px solid #e5e7eb",
-    fontSize: "0.8rem",
-  },
-  removeButton: {
-    backgroundColor: "transparent",
-    border: "none",
-    color: "#6b7280",
-    cursor: "pointer",
-    fontSize: "0.8rem",
-    padding: "0.2rem 0.4rem",
-    borderRadius: "4px",
-  },
-  emptyMessage: {
-    color: "#6b7280",
     fontSize: "0.9rem",
-    fontStyle: "italic",
-    textAlign: "center",
-    padding: "1rem 0",
+    fontWeight: "600",
+    width: "100%",
   },
   favoriteIcon: {
     background: "transparent",
@@ -1341,21 +1359,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: "1.5rem",
     cursor: "pointer",
     padding: "0",
-    marginLeft: "0.5rem",
+    marginLeft: "8px",
     lineHeight: 1,
   },
   favoriteIconLarge: {
     background: "transparent",
     border: "none",
-    fontSize: "2rem",
+    fontSize: "1.8rem",
     cursor: "pointer",
     padding: "0",
     lineHeight: 1,
-  },
-  modalButtonsContainer: {
-    display: "flex",
-    justifyContent: "flex-end",
-    marginTop: "1.5rem",
-    gap: "1rem",
   },
 }
