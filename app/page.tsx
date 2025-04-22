@@ -908,7 +908,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    color: "#64748b",
+    color: "#374151", // Changed from #64748b to a darker shade
     background: "none",
     border: "none",
     cursor: "pointer",
@@ -961,7 +961,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     gap: "4px",
     fontSize: "0.9rem",
-    color: "#4b5563",
+    color: "#374151", // Changed from #4b5563 to a darker shade
   },
   rangeInput: {
     width: "100%",
@@ -978,7 +978,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   filterSectionTitle: {
     fontSize: "0.9rem",
     marginBottom: "8px",
-    color: "#4b5563",
+    color: "#374151", // Changed from #4b5563 to a darker shade
   },
   allergenTags: {
     display: "flex",
@@ -1000,7 +1000,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     gap: "4px",
     fontSize: "0.9rem",
-    color: "#4b5563",
+    color: "#374151", // Changed from #4b5563 to a darker shade
   },
   textInput: {
     padding: "8px 12px",
@@ -1036,7 +1036,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   toggleLabel: {
     fontSize: "0.9rem",
-    color: "#4b5563",
+    color: "#374151", // Changed from #4b5563 to a darker shade
   },
   checkbox: {
     width: "16px",
@@ -1113,13 +1113,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     WebkitBoxOrient: "vertical",
     marginBottom: "8px",
     fontSize: "0.9rem",
-    color: "#4b5563",
+    color: "#374151", // Changed from #4b5563 to a darker shade
   },
   basicInfo: {
     display: "flex",
     gap: "12px",
     marginBottom: "8px",
-    color: "#4b5563",
+    color: "#374151", // Changed from #4b5563 to a darker shade
     fontSize: "0.8rem",
   },
   dietaryTagsContainer: {
@@ -1180,7 +1180,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   favoriteItemDescription: {
     fontSize: "0.8rem",
-    color: "#4b5563",
+    color: "#374151", // Changed from #4b5563 to a darker shade
     marginBottom: "4px",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -1192,12 +1192,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     display: "flex",
     gap: "12px",
     fontSize: "0.75rem",
-    color: "#6b7280",
+    color: "#374151", // Changed from #6b7280 to a darker shade
   },
   removeButton: {
     backgroundColor: "#f3f4f6",
     border: "none",
-    color: "#6b7280",
+    color: "#374151", // Changed from #6b7280 to a darker shade
     cursor: "pointer",
     fontSize: "0.9rem",
     width: "24px",
@@ -1216,7 +1216,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     textAlign: "center",
   },
   emptyMessage: {
-    color: "#6b7280",
+    color: "#374151", // Changed from #6b7280 to a darker shade
     fontSize: "0.9rem",
     marginBottom: "20px",
   },
@@ -1267,7 +1267,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   recipeDescription: {
     fontSize: "0.9rem",
     marginBottom: "12px",
-    color: "#4b5563",
+    color: "#374151", // Changed from #4b5563 to a darker shade
   },
   recipeBasicInfo: {
     display: "flex",
@@ -1277,6 +1277,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   recipeInfoItem: {
     fontSize: "0.9rem",
+    color: "#374151", // Darker color for better visibility
   },
   recipeDietaryTags: {
     display: "flex",
@@ -1327,6 +1328,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   recipeListItem: {
     marginBottom: "6px",
     fontSize: "0.9rem",
+    color: "#1f2937", // Added explicit darker color
   },
   recipeFiltersSection: {
     backgroundColor: "#f8fafc",
@@ -1341,6 +1343,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     flexDirection: "column",
     gap: "6px",
     fontSize: "0.8rem",
+    color: "#1f2937", // Added explicit darker color
   },
   closeRecipeButton: {
     padding: "12px",
