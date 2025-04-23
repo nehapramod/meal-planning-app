@@ -426,6 +426,7 @@ function RecipeApp() {
     setIsModalOpen(true)
   }
 
+  // Update the RecipeModal component to use the new macrosText style
   const RecipeModal = ({ recipe, onClose }: { recipe: Recipe; onClose: () => void }) => {
     const isFavorite = favorites.some((fav) => fav.name === recipe.name)
 
@@ -465,7 +466,7 @@ function RecipeApp() {
 
           <div style={styles.recipeSection}>
             <h3 style={styles.recipeSectionTitle}>Macros:</h3>
-            <p>{recipe.macros}</p>
+            <p style={styles.macrosText}>{recipe.macros}</p>
           </div>
 
           <div style={styles.recipeSection}>
@@ -664,6 +665,7 @@ function RecipeApp() {
             <div style={styles.filterSection}>
               <h3 style={styles.filterSectionTitle}>Dietary Preferences:</h3>
               <div style={styles.preferencesContainer}>
+                {/* Update the dietary options rendering to ensure text is visible */}
                 {dietaryOptions.map((option) => (
                   <label
                     key={option.value}
@@ -683,7 +685,7 @@ function RecipeApp() {
                       }}
                       style={styles.preferenceCheckbox}
                     />
-                    {option.label}
+                    <span style={{ color: "#1f2937" }}>{option.label}</span>
                   </label>
                 ))}
               </div>
@@ -719,10 +721,11 @@ function RecipeApp() {
                 />
               </div>
 
+              {/* Update the selectedRecipePreview component to make text more visible */}
               {selectedRecipe && (
                 <div style={styles.selectedRecipePreview} onClick={() => openRecipeModal(selectedRecipe)}>
                   <h2 style={styles.selectedTitle}>🎉 You got: {selectedRecipe.name}</h2>
-                  <p>Tap to see full recipe details!</p>
+                  <p style={{ color: "#1f2937", fontWeight: "500" }}>Tap to see full recipe details!</p>
                 </div>
               )}
             </div>
@@ -1022,6 +1025,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     borderRadius: "16px",
     fontSize: "0.8rem",
     cursor: "pointer",
+    color: "#1f2937", // Added explicit dark color for the text
   },
   preferenceCheckbox: {
     width: "16px",
@@ -1372,5 +1376,10 @@ const styles: { [key: string]: React.CSSProperties } = {
     cursor: "pointer",
     padding: "0",
     lineHeight: 1,
+  },
+  macrosText: {
+    color: "#1f2937", // Dark color for better visibility
+    fontSize: "0.9rem",
+    fontWeight: "500",
   },
 }
